@@ -1,0 +1,144 @@
+
+<div class="pincode-checker" id="pincode-checker-{{ block.id }}">
+  <label for="pincode-input-{{ block.id }}">
+    Check delivery availability
+  </label>
+
+  <div class="pincode-checker__form">
+    <input
+      id="pincode-input-{{ block.id }}"
+      type="text"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="Enter 6-digit pincode"
+      autocomplete="postal-code"
+      aria-describedby="pincode-message-{{ block.id }}"
+    >
+
+    <button type="button" id="pincode-button-{{ block.id }}">
+      Check
+    </button>
+  </div>
+
+  <p
+    id="pincode-message-{{ block.id }}"
+    class="pincode-checker__message"
+    role="status"
+    aria-live="polite"
+  ></p>
+</div>
+
+<style>
+  #pincode-checker-{{ block.id }} {
+    margin: 16px 0;
+  }
+
+  #pincode-checker-{{ block.id }} label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  #pincode-checker-{{ block.id }} .pincode-checker__form {
+    display: flex;
+    gap: 8px;
+    max-width: 440px;
+  }
+
+  #pincode-checker-{{ block.id }} input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  #pincode-checker-{{ block.id }} button {
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 4px;
+    background: #222;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  #pincode-checker-{{ block.id }} button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  #pincode-checker-{{ block.id }} .pincode-checker__message {
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    #pincode-checker-{{ block.id }} .pincode-checker__form {
+      flex-wrap: wrap;
+    }
+
+    #pincode-checker-{{ block.id }} button {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const root = document.getElementById('pincode-checker-{{ block.id }}');
+    if (!root || root.dataset.initialized === 'true') return;
+    root.dataset.initialized = 'true';
+
+    const input = root.querySelector('input');
+    const button = root.querySelector('button');
+    const message = root.querySelector('[role="status"]');
+
+    button.addEventListener('click', async () => {
+      const pincode = input.value.trim();
+
+      if (!/^[1-9][0-9]{5}$/.test(pincode)) {
+        message.textContent = 'Enter a valid 6-digit Indian pincode.';
+        return;
+      }
+
+      button.disabled = true;
+      message.textContent = 'Checking pincode...';
+
+      try {
+        const response = await fetch(
+          `https://api.postalpincode.in/pincode/${pincode}`
+        );
+
+        if (!response.ok) {
+          throw new Error('API request failed');
+        }
+
+        const data = await response.json();
+        const result = data?.[0];
+
+        if (result?.Status !== 'Success' || !result?.PostOffice?.length) {
+          message.textContent = 'Pincode not found. Please check and try again.';
+          return;
+        }
+
+        const office = result.PostOffice[0];
+        message.textContent =
+          `Location: ${office.District}, ${office.State}. ` +
+          'This confirms the postal location, not delivery serviceability.';
+      } catch (error) {
+        message.textContent =
+          'Unable to check right now. Please try again later.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Pincode Checker",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}
