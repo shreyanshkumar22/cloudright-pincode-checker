@@ -56,7 +56,9 @@ District + State / Error Message
 
 **Method:** GET
 
-The API response is parsed to retrieve the postal status and Post Office details. When a successful response contains postal records, the checker displays the district and state from the returned data.
+The API response is parsed to retrieve the postal status and Post Office details. When a successful response contains postal records, the checker displays the serviceability message using the returned district and state.
+
+**Example:** `✓ Serviceable: Delivery available to Bangalore, Karnataka`
 
 **Important:** A valid postal record confirms the pincode's postal location; it does not guarantee that a particular seller can deliver to that location.
 
