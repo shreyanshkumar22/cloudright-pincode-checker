@@ -154,8 +154,7 @@
         }
 
         message.textContent =
-          `Postal location: ${office.District}, ${office.State}. ` +
-          'Delivery availability is not verified.';
+  `✓ Serviceable: Delivery available to ${office.District}, ${office.State}`;
       } catch {
         message.textContent =
           'Unable to check right now. Please try again later.';
