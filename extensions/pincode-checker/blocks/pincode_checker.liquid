@@ -1,31 +1,34 @@
 
 <div class="pincode-checker" id="pincode-checker-{{ block.id }}">
-  <label for="pincode-input-{{ block.id }}">
-    Check delivery availability
-  </label>
+  <form class="pincode-checker__form" novalidate>
+    <label for="pincode-input-{{ block.id }}">
+      Check your postal location
+    </label>
 
-  <div class="pincode-checker__form">
-    <input
-      id="pincode-input-{{ block.id }}"
-      type="text"
-      inputmode="numeric"
-      maxlength="6"
-      placeholder="Enter 6-digit pincode"
-      autocomplete="postal-code"
-      aria-describedby="pincode-message-{{ block.id }}"
-    >
+    <div class="pincode-checker__controls">
+      <input
+        id="pincode-input-{{ block.id }}"
+        name="pincode"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        pattern="[1-9][0-9]{5}"
+        placeholder="Enter 6-digit pincode"
+        autocomplete="postal-code"
+        aria-describedby="pincode-message-{{ block.id }}"
+        required
+      >
 
-    <button type="button" id="pincode-button-{{ block.id }}">
-      Check
-    </button>
-  </div>
+      <button type="submit">Check</button>
+    </div>
 
-  <p
-    id="pincode-message-{{ block.id }}"
-    class="pincode-checker__message"
-    role="status"
-    aria-live="polite"
-  ></p>
+    <p
+      id="pincode-message-{{ block.id }}"
+      class="pincode-checker__message"
+      role="status"
+      aria-live="polite"
+    ></p>
+  </form>
 </div>
 
 <style>
@@ -39,7 +42,7 @@
     font-weight: 600;
   }
 
-  #pincode-checker-{{ block.id }} .pincode-checker__form {
+  #pincode-checker-{{ block.id }} .pincode-checker__controls {
     display: flex;
     gap: 8px;
     max-width: 440px;
@@ -68,12 +71,12 @@
   }
 
   #pincode-checker-{{ block.id }} .pincode-checker__message {
-    margin-top: 10px;
+    margin: 10px 0 0;
     font-size: 14px;
   }
 
   @media (max-width: 480px) {
-    #pincode-checker-{{ block.id }} .pincode-checker__form {
+    #pincode-checker-{{ block.id }} .pincode-checker__controls {
       flex-wrap: wrap;
     }
 
@@ -85,23 +88,36 @@
 
 <script>
   (() => {
-    const root = document.getElementById('pincode-checker-{{ block.id }}');
+    const root = document.getElementById(
+      'pincode-checker-{{ block.id }}'
+    );
+
     if (!root || root.dataset.initialized === 'true') return;
     root.dataset.initialized = 'true';
 
+    const form = root.querySelector('form');
     const input = root.querySelector('input');
     const button = root.querySelector('button');
     const message = root.querySelector('[role="status"]');
 
-    button.addEventListener('click', async () => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      if (button.disabled) return;
+
       const pincode = input.value.trim();
 
+      message.textContent = '';
+
       if (!/^[1-9][0-9]{5}$/.test(pincode)) {
-        message.textContent = 'Enter a valid 6-digit Indian pincode.';
+        message.textContent =
+          'Enter a valid 6-digit Indian pincode.';
+        input.focus();
         return;
       }
 
       button.disabled = true;
+      input.setAttribute('aria-busy', 'true');
       message.textContent = 'Checking pincode...';
 
       try {
@@ -115,21 +131,37 @@
 
         const data = await response.json();
         const result = data?.[0];
+        const offices = result?.PostOffice;
 
-        if (result?.Status !== 'Success' || !result?.PostOffice?.length) {
-          message.textContent = 'Pincode not found. Please check and try again.';
+        if (
+          result?.Status !== 'Success' ||
+          !Array.isArray(offices) ||
+          offices.length === 0
+        ) {
+          message.textContent =
+            'Pincode not found. Please check and try again.';
           return;
         }
 
-        const office = result.PostOffice[0];
+        const office = offices.find(
+          (item) => item?.District && item?.State
+        );
+
+        if (!office) {
+          message.textContent =
+            'Location details are unavailable for this pincode.';
+          return;
+        }
+
         message.textContent =
-          `Location: ${office.District}, ${office.State}. ` +
-          'This confirms the postal location, not delivery serviceability.';
-      } catch (error) {
+          `Postal location: ${office.District}, ${office.State}. ` +
+          'Delivery availability is not verified.';
+      } catch {
         message.textContent =
           'Unable to check right now. Please try again later.';
       } finally {
         button.disabled = false;
+        input.removeAttribute('aria-busy');
       }
     });
   })();
