@@ -1,156 +1,130 @@
-# Shopify App Template - Extension Only
+# CloudRight Pincode Checker
 
-This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using [Preact](https://preactjs.com/) and [Vite](https://vite.dev/). It uses Shopify's [Direct API access](https://shopify.dev/docs/api/app-home#direct-api-access) and [App Bridge](https://shopify.dev/docs/api/app-bridge) to make authenticated calls to the Shopify Admin API directly from the browser — no server required.
+A Shopify Theme App Extension that allows customers to look up an Indian postal pincode directly from a product detail page.
 
-Rather than cloning this repo, follow the [Quick Start steps](#quick-start) below.
+## Features
 
-## Quick start
+- Pincode input with six-digit validation.
+- Delivery-check button on the product page.
+- Integration with the India Post public pincode API.
+- Displays the returned district and state.
+- Handles invalid input, unknown pincodes, and network/API errors.
+- Responsive layout for mobile and desktop.
+- Does not modify product prices, inventory, cart, or checkout.
+
+## System Architecture
+
+```text
+Shopify Product Detail Page
+          |
+          v
+Theme App Extension (Liquid)
+          |
+          v
+Pincode Input + Check Button
+          |
+          v
+Client-side Validation
+          |
+          v
+JavaScript fetch()
+          |
+          v
+India Post Public API
+          |
+          v
+JSON Response Parsing
+          |
+          v
+District + State / Error Message
+```
+
+## Technology Stack
+
+- Shopify Theme App Extension
+- Liquid
+- HTML and CSS
+- JavaScript (Fetch API)
+- India Post public pincode API
+- Shopify CLI
+
+## API Integration
+
+**Endpoint pattern**
+
+`https://api.postalpincode.in/pincode/{PINCODE}`
+
+**Method:** GET
+
+The API response is parsed to retrieve the postal status and Post Office details. When a successful response contains postal records, the checker displays the district and state from the returned data.
+
+**Important:** A valid postal record confirms the pincode's postal location; it does not guarantee that a particular seller can deliver to that location.
+
+## Project Structure
+
+```text
+extensions/
+└── pincode-checker/
+    ├── assets/
+    ├── blocks/
+    │   ├── pincode_checker.liquid
+    │   └── star_rating.liquid
+    ├── locales/
+    ├── snippets/
+    └── shopify.extension.toml
+```
+
+## Local Setup
 
 ### Prerequisites
 
-Before you begin, you'll need to [download and install the Shopify CLI](https://shopify.dev/docs/apps/tools/cli/getting-started) if you haven't already.
+- Node.js
+- npm
+- Git
+- Shopify CLI
+- A Shopify development store
 
-### Setup
+### Run locally
 
-```shell
-shopify app init --template=https://github.com/Shopify/shopify-app-template-extension-only
-```
+1. Clone or download this repository.
+2. Open a terminal in the project root.
+3. Install dependencies if required:
 
-### Local Development
+   `npm install`
 
-```shell
-shopify app dev
-```
+4. Start the Shopify development environment:
 
-Press P to open the URL to your app. Once you click install, you can start development.
+   `shopify app dev`
 
-Local development is powered by [Shopify CLI](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally). It logs into your account, connects to an app, provides environment variables, updates remote config, creates a tunnel and provides commands to generate extensions.
+5. Install the development app in the development store if prompted.
+6. Open the theme editor and add the **Pincode Checker** app block to a product page.
+7. Save the theme and test the block in the preview.
 
-## How it works
+## Test Cases
 
-### Authentication
+| Test | Input or condition | Expected behavior |
+|---|---|---|
+| Valid pincode | `560001` | Displays returned district and state |
+| Short input | `123` | Shows validation error |
+| Unknown pincode | `999999` | Shows not-found message if the API returns no postal record |
+| Network failure | Disconnect network during lookup | Shows an error message |
+| Mobile layout | Narrow browser viewport | Input and button remain usable |
 
-This template uses [Shopify managed installation](https://shopify.dev/docs/apps/build/authentication-authorization/app-installation). Shopify handles the OAuth flow and app installation automatically. Once installed, the app is fully embedded in the Shopify Admin.
+Actual API responses can vary; verify the behavior against the live API.
 
-### Querying data
+## Limitations
 
-This template uses [Direct API access](https://shopify.dev/docs/api/app-home#direct-api-access) — the Shopify Admin API is called directly from the browser using App Bridge. No server-side code is needed.
+- Requires access to the public postal API.
+- Browser requests may be affected by network restrictions or CORS.
+- Postal location lookup is not a delivery-serviceability check.
+- The current implementation does not use seller-specific delivery rules.
 
-This template comes pre-configured with examples of querying data using GraphQL with direct API access, and using [metaobjects](https://shopify.dev/docs/apps/custom-data/metaobjects) to store and retrieve structured app data — see [/shared/models/faq.ts](./shared/models/faq.ts).
+## Future Improvements
 
-### App Bridge
+- Configurable UI settings in the Shopify theme editor.
+- Improved accessibility and automated tests.
+- Seller-specific serviceability checks if required by the business.
 
-[App Bridge](https://shopify.dev/docs/api/app-bridge) is loaded automatically in embedded apps.
+## License
 
-### Polaris Web Components
-
-This template uses [Polaris Web Components](https://shopify.dev/docs/api/app-home/web-components) — the native custom element version of Polaris that works in any framework (including Preact). No additional package installation is required as they are provided automatically in the Shopify Admin iframe.
-
-## GraphQL Codegen
-
-This template is pre-configured with [GraphQL Codegen](https://the-guild.dev/graphql/codegen) to generate TypeScript types from your GraphQL queries.
-
-To regenerate types after updating queries:
-
-```shell
-npm run codegen
-```
-
-To watch for changes:
-
-```shell
-npm run codegen:watch
-```
-
-## Build
-
-Build the app by running:
-
-Using npm:
-
-```shell
-npm run build
-```
-
-Using yarn:
-
-```shell
-yarn build
-```
-
-Using pnpm:
-
-```shell
-pnpm run build
-```
-
-## Shopify Dev MCP
-
-This template is configured with the Shopify Dev MCP. This instructs [Cursor](https://cursor.com/), [GitHub Copilot](https://github.com/features/copilot), [Claude Code](https://claude.com/product/claude-code), and [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) to use the Shopify Dev MCP.
-
-For more information on the Shopify Dev MCP please read [the documentation](https://shopify.dev/docs/apps/build/devmcp).
-
-## Metafields and Metaobjects
-
-This template uses [metaobjects](https://shopify.dev/docs/apps/custom-data/metaobjects) and [metafields](https://shopify.dev/docs/apps/custom-data/metafields) to store structured app data without a custom database.
-
-### Metaobject: FAQ
-
-The template defines a `faq` metaobject type for storing FAQ entries. Each FAQ has a question, answer, a flag to control visibility on the FAQ page, and optional product associations.
-
-Defined in `shopify.app.toml`:
-
-```toml
-[metaobjects.app.faq]
-name = "FAQ"
-
-[metaobjects.app.faq.fields.question]
-name = "Question"
-type = "single_line_text_field"
-required = true
-
-[metaobjects.app.faq.fields.answer]
-name = "Answer"
-type = "multi_line_text_field"
-required = true
-
-[metaobjects.app.faq.fields.show_on_faq_page]
-name = "Show on FAQ page"
-type = "boolean"
-
-[metaobjects.app.faq.fields.products]
-name = "Products"
-type = "list.product_reference"
-```
-
-### Metafield: Product FAQ
-
-A metafield definition links individual products to a FAQ metaobject entry, allowing merchants to associate a FAQ with specific products.
-
-```toml
-[product.metafields.app.faq]
-name = "FAQ"
-description = "FAQ for this product"
-type = "metaobject_reference<$app:faq>"
-access.admin = "merchant_read_write"
-```
-
-These definitions are automatically synced to Shopify when you run `shopify app dev` or `shopify app deploy`. See [/shared/models/faq.ts](./shared/models/faq.ts) for the client-side model that reads and writes these metaobjects via the Admin GraphQL API.
-
-## Resources
-
-Preact & Vite:
-
-- [Preact docs](https://preactjs.com/guide/v10/getting-started)
-- [Vite docs](https://vite.dev/)
-
-Shopify:
-
-- [Intro to Shopify apps](https://shopify.dev/docs/apps/getting-started)
-- [Direct API access](https://shopify.dev/docs/api/app-home#direct-api-access)
-- [Shopify CLI](https://shopify.dev/docs/apps/tools/cli)
-- [App Bridge](https://shopify.dev/docs/api/app-bridge)
-- [Polaris Web Components](https://shopify.dev/docs/api/app-home/web-components)
-- [Metaobjects](https://shopify.dev/docs/apps/custom-data/metaobjects)
-- [App extensions](https://shopify.dev/docs/apps/app-extensions/list)
-- [Shopify Functions](https://shopify.dev/docs/api/functions)
+For evaluation and development use. Confirm the applicable license before redistributing this project.
